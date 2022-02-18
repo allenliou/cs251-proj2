@@ -14,6 +14,7 @@ contract Splitwise {
     }
 
     function _lookup (address _creditor, address _debtor) public view returns (uint, uint) {
+        ///this needs to be called multiple times by the client in order to get all relevant txs between parties
         uint key = uint(keccak256(abi.encodePacked(_debtor, _creditor)));
         return (uint(currentState[key]), uint(key));
     }
