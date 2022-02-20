@@ -45,7 +45,7 @@ contract Splitwise {
             return 0;
         }
         else {
-            return transactionsOfInterest; ///need to retur a set here, but not yet sure how to implement
+            return transactionsOfInterest; ///need to return a set here, but not yet sure how to implement
         }
     }
 }
