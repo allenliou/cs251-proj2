@@ -28,7 +28,7 @@ contract Splitwise {
 
     function _updateAmountOwed (uint _transactionID, uint32 _amount) public {
         transactions[_transactionID].value = _amount; ///edit the original transaction's value based on info passed from client
-        (if transactions[_transactionID].value == 0) { /// if the new value is 0, remove the transaction from the mapping...
+        if(transactions[_transactionID].value == 0) { /// if the new value is 0, remove the transaction from the mapping...
             delete trasactions[_transactionID] 
         }
     }
