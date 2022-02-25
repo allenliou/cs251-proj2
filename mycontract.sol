@@ -3,19 +3,48 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract Splitwise {
 
-    event NewTransaction(uint key, address _debtor, address _creditor, uint _amount);
-    // Transaction[] public transactions; 
-    mapping (uint => uint32) currentState;
-
-    function _addIOU(address _creditor, uint32 _amount) public {
-        uint key = uint(keccak256(abi.encodePacked(msg.sender, _creditor)));
-        currentState[key] = _amount;
-        emit NewTransaction(key, msg.sender, _creditor, currentState[key]);
+    struct currState { 
+        uint currStateId;
+        address debtor;
+        address creditor;
+        uint amount; ///ideally this should be a fixed point to account for decimals, but not sure how to implement atm. refactor?
     }
 
-    function _lookup (address _creditor, address _debtor) public view returns (uint, uint) {
-        ///this needs to be called multiple times by the client in order to get all relevant txs between parties
-        uint key = uint(keccak256(abi.encodePacked(_debtor, _creditor)));
-        return (uint(currentState[key]), uint(key));
+    mapping(uint => currState) private currStates; /// map currStateId to currState object (struct) 
+    uint private currStateCount = 0; // initialize a currStateCount of 0
+
+
+    event NewCurrentStateAdded(uint CurrentStateID, address _debtor, address _creditor, uint _amount); ///broadcast the creation of each tx
+    event CurrentStateUpdated(uint CurrentStateID, address _debtor, address _creditor, uint _amount); 
+
+    function _addIOU(address _creditor, uint32 _amount) public { ///create a new Transaction and update the mapping
+        require(_creditor == address(_creditor)); //check if _creditor is valid
+
+        //if currState does exist between debtor(msg.sender) and creditor, update amount, else add new currState.
+        uint key = _getCurrStateId(msg.sender, _creditor); 
+        if (key > 0 ){
+            currStates[key].amount += _amount;
+            emit CurrentStateUpdated(key, msg.sender, _creditor, currStates[key].amount);
+        } 
+        else {
+            currStateCount+=1;
+            currStates[currStateCount] = currState({
+                currStateId: currStateCount,
+                debtor:msg.sender,
+                creditor:_creditor,
+                amount: _amount
+             });
+             emit NewCurrentStateAdded(currStateCount, msg.sender, _creditor, _amount);
+        }
     }
+
+    function _getCurrStateId(address _debtor, address _creditor) private view returns (uint a) {
+
+        for (uint i = 1; i <= currStateCount; i++) {
+            if (currStates[i].debtor == _debtor && currStates[i].creditor == _creditor) { 
+                return i; 
+            }
+        }
+        return 0; 
+    }    
 }
